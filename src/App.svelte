@@ -1,61 +1,60 @@
 <!-- need to try this  https://github.com/stefanreifenberg/three-satellites/tree/main -->
 <script>
-	import { scaleLinear } from 'd3';
-	import Circle from './Circle.svelte';
+	import { scaleLinear, line, curveMonotoneX } from 'd3';
+	import { dataByYear, dayOfYearDomain, valueDomain } from './stores';
 
-	let data = [];
-	setInterval(() => {
-		data = Array.from({ length: 100 }).map(() => {
+	const colors = {
+		2023: '#ffafcc',
+		2024: '#bde0fe',
+		other: '#ffffff',
+	};
+
+	const lineGenerator = line()
+		.x((d) => d.x)
+		.y((d) => d.y)
+		.curve(curveMonotoneX);
+
+	let width, height;
+
+	$: xScale = scaleLinear().domain($dayOfYearDomain).range([0, width]);
+	$: yScale = scaleLinear().domain($valueDomain).range([height, 0]);
+
+	// $: console.log({ dataByYear: $dataByYear });
+
+	$: renderedData = $dataByYear.map((d) => {
+		const renderedValues = d.values.map((v) => {
 			return {
-				a: Math.random(),
-				b: Math.random(),
-				r: Math.random(),
-				fill: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
+				...v,
+				x: xScale(v.day_of_year),
+				y: yScale(v.value),
 			};
 		});
-	}, 2000);
-
-	// const data = Array.from({ length: 1000 }).map(() => {
-	// 	return {
-	// 		a: Math.random(),
-	// 		b: Math.random(),
-	// 		r: Math.random(),
-	// 		fill: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
-	// 	};
-	// });
-	// const data = [
-	// 	{ a: 155, b: 384, r: 20, fill: '#0000FF' },
-	// 	{ a: 340, b: 238, r: 52, fill: '#FF0AAE' },
-	// 	{ a: 531, b: 151, r: 20, fill: '#00E1FF' },
-	// 	{ a: 482, b: 307, r: 147, fill: '#7300FF' },
-	// 	{ a: 781, b: 91, r: 61, fill: '#0FFB33' },
-	// 	{ a: 668, b: 229, r: 64, fill: '#D400FF' },
-	// ];
-
-	let width = 1000;
-	let height = 500;
-
-	$: xScale = scaleLinear().domain([0, 1]).range([0, width]);
-	$: yScale = scaleLinear().domain([0, 1]).range([height, 0]);
-	$: rScale = scaleLinear()
-		.domain([0, 1])
-		.range([5, width / 100]);
+		return {
+			...d,
+			values: renderedValues,
+			path: lineGenerator(renderedValues),
+			stroke: colors[d.key] || colors.other,
+			strokeWidth: [2024, 2023].includes(d.key) ? 4.0 : 1,
+			opacity: [2024, 2023].includes(d.key) ? 1.0 : 0.3,
+		};
+	});
+	$: console.log(renderedData);
 </script>
 
 <main
-	bind:clientWidth={width}
 	bind:clientHeight={height}
+	bind:clientWidth={width}
 >
 	<svg
 		width={width}
 		height={height}
 	>
-		{#each data as { a, b, r, fill }}
-			<Circle
-				x={xScale(a)}
-				y={yScale(b)}
-				r={rScale(r)}
-				fill={fill}
+		{#each renderedData as { path, stroke, strokeWidth, opacity }}
+			<path
+				d={path}
+				stroke={stroke}
+				stroke-width={strokeWidth}
+				opacity={opacity}
 			/>
 		{/each}
 	</svg>
@@ -63,10 +62,13 @@
 
 <style>
 	main {
-		width: 80vw;
-		height: 80vh;
+		width: 100vw;
+		height: 100vh;
+		background: black;
 	}
-	svg {
-		background: #f3fff0;
+	path {
+		fill: none;
+		stroke-linecap: round;
+		/* stroke: white; */
 	}
 </style>
