@@ -27,3 +27,7 @@ export const dayOfYearDomain = derived(data, ($data) => {
 export const valueDomain = derived(data, ($data) => {
 	return extent($data, (d) => d.value);
 });
+
+export const yearDomain = derived(data, ($data) => {
+	return extent($data, (d) => d.year);
+});

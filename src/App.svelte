@@ -1,13 +1,20 @@
 <!-- need to try this  https://github.com/stefanreifenberg/three-satellites/tree/main -->
 <script>
 	import { scaleLinear, line, curveMonotoneX } from 'd3';
-	import { dataByYear, dayOfYearDomain, valueDomain } from './stores';
+	import {
+		dataByYear,
+		dayOfYearDomain,
+		valueDomain,
+		yearDomain,
+	} from './stores';
 
 	const colors = {
 		2023: '#ffafcc',
 		2024: '#bde0fe',
 		other: '#ffffff',
 	};
+
+	const tempDomain = [-1.5, 1.25];
 
 	const lineGenerator = line()
 		.x((d) => d.x)
@@ -38,7 +45,8 @@
 			opacity: [2024, 2023].includes(d.key) ? 1.0 : 0.3,
 		};
 	});
-	$: console.log(renderedData);
+	$: console.log($yearDomain);
+	$: console.log(tempDomain);
 </script>
 
 <main
