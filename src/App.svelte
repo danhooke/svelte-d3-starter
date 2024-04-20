@@ -1,72 +1,85 @@
-<!-- need to try this  https://github.com/stefanreifenberg/three-satellites/tree/main -->
 <script>
-	import { scaleLinear } from 'd3';
+	import data from './data/data.json';
+	import { scaleLinear } from 'd3-scale';
+	import AxisX from './components/AxisX.svelte';
+	import AxisY from './components/AxisY.svelte';
+	import Tooltip from './components/Tooltip.svelte';
 	import Circle from './Circle.svelte';
+	console.log(data);
+	const margin = { top: 20, right: 80, left: 0, bottom: 20 };
+	let width = 400;
+	let height = 400;
+	$: xScale = scaleLinear()
+		.domain([0, 60])
+		.range([0, width - margin.left - margin.right]);
+	const yScale = scaleLinear()
+		.domain([0, 10])
+		.range([height - margin.top - margin.bottom, 0]);
 
-	let data = [];
-	setInterval(() => {
-		data = Array.from({ length: 100 }).map(() => {
-			return {
-				a: Math.random(),
-				b: Math.random(),
-				r: Math.random(),
-				fill: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
-			};
-		});
-	}, 2000);
-
-	// const data = Array.from({ length: 1000 }).map(() => {
-	// 	return {
-	// 		a: Math.random(),
-	// 		b: Math.random(),
-	// 		r: Math.random(),
-	// 		fill: `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`,
-	// 	};
-	// });
-	// const data = [
-	// 	{ a: 155, b: 384, r: 20, fill: '#0000FF' },
-	// 	{ a: 340, b: 238, r: 52, fill: '#FF0AAE' },
-	// 	{ a: 531, b: 151, r: 20, fill: '#00E1FF' },
-	// 	{ a: 482, b: 307, r: 147, fill: '#7300FF' },
-	// 	{ a: 781, b: 91, r: 61, fill: '#0FFB33' },
-	// 	{ a: 668, b: 229, r: 64, fill: '#D400FF' },
-	// ];
-
-	let width = 1000;
-	let height = 500;
-
-	$: xScale = scaleLinear().domain([0, 1]).range([0, width]);
-	$: yScale = scaleLinear().domain([0, 1]).range([height, 0]);
-	$: rScale = scaleLinear()
-		.domain([0, 1])
-		.range([5, width / 100]);
+	let hoveredData;
+	$: console.log(hoveredData);
 </script>
 
-<main
+<h1>Random Activities</h1>
+<div
+	class="chart-container"
 	bind:clientWidth={width}
-	bind:clientHeight={height}
+	on:mouseleave={() => {
+		hoveredData = null;
+	}}
 >
 	<svg
 		width={width}
 		height={height}
 	>
-		{#each data as { a, b, r, fill }}
-			<Circle
-				x={xScale(a)}
-				y={yScale(b)}
-				r={rScale(r)}
-				fill={fill}
-			/>
-		{/each}
+		<AxisX
+			height={height}
+			xScale={xScale}
+			margin={margin}
+		/>
+		<AxisY
+			width={width}
+			yScale={yScale}
+			margin={margin}
+		/>
+		<g
+			class="circles"
+			transform="translate({margin.left} {margin.top}"
+		>
+			{#each data.sort((a, b) => a.Minutes - b.Minutes) as act}
+				<circle
+					cx={xScale(act.Minutes)}
+					cy={yScale(act.Distance)}
+					r={hoveredData && hoveredData == act ? '10' : '4'}
+					fill="orange"
+					stroke="black"
+					on:mouseover={() => {
+						hoveredData = act;
+					}}
+					on:focus={() => {
+						hoveredData = act;
+					}}
+					tabindex="0"
+				/>
+			{/each}</g
+		>
 	</svg>
-</main>
+	{#if hoveredData}
+		<Tooltip
+			data={hoveredData}
+			xScale={xScale}
+			yScale={yScale}
+		/>
+	{/if}
+</div>
 
 <style>
-	main {
-		width: 80vw;
-		height: 80vh;
-	}
 	svg {
-		background: #f3fff0;
+		background-color: aliceblue;
+		/* padding: 20px; */
+	}
+	circle {
+		transition: all 300ms ease;
+		cursor: pointer;
 	}
 </style>
